@@ -4,6 +4,16 @@ import numpy as np
 from scipy import constants as C
 from typing import Callable, Optional, Tuple
 
+'''
+Functions implemented within this code can be imported to a new Python file
+and run without any further importing. However, if you'd like to run main()
+from this .py you'll need to import the MiniPys from:
+github.com/emilio-moreno/MiniPys
+'''
+
+minipy_formatter_path = r'C:\Users\Laevateinn\Documents\GitHub' \
+                         r'\MiniPys\Formatter'
+
 
 # %% Fields
 def dipole(X: np.ndarray, Y: np.ndarray, p= (0, 1), normal: bool = True):
@@ -26,9 +36,10 @@ def dipole(X: np.ndarray, Y: np.ndarray, p= (0, 1), normal: bool = True):
 
 #%% Quiver
 ndarray = np.ndarray
-def Quiver(x: ndarray, y: ndarray,
-           F: Callable[[ndarray, ndarray], Tuple[ndarray, ndarray, ndarray]],
-           cmap : str = 'gist_earth') -> Optional[Tuple[plt.figure, plt.axis, plt.axis]]:
+F_type = Callable[[ndarray, ndarray], Tuple[ndarray, ndarray, ndarray]]
+return_type = Optional[Tuple[plt.figure, plt.axis, plt.axis]]
+def Quiver(x: ndarray, y: ndarray, F: F_type,
+           cmap : str = 'gist_earth') -> return_type:
     '''
     Plots a normalized, colormapped quiver.
         
@@ -67,23 +78,28 @@ def Quiver(x: ndarray, y: ndarray,
     return fig, ax, cbar.ax
 
 
+#%% main()
+def main():    
+    # Dipole moment
+    import sys
+    sys.path.insert(0, minipy_formatter_path)
+    import minipy_formatter as MF
+    
+    
+    #CMU = r"C:\Users\Laevateinn\AppData\Local\Microsoft\Windows\Fonts"
+    #CMU += "\cmunrm.ttf"
+    MF.Format(font_paths=[]).rcUpdate()
+    p = (-1, 5)
+    x = np.linspace(-3, 3, 20)
+    y = np.linspace(-3, 3, 20)
+    F = lambda X, Y: dipole(X, Y, p)
+    
+    fig, ax, cbar_ax = Quiver(x, y, F)
+    ax.set(title=f'Dipole field | $p = {p}$', xlabel='x', ylabel='y')
+    cbar_ax.set(ylabel='', yticks=[])
+    
+    plt.show()
 
-#%% Calls
-# Dipole moment
-p = (1, 1)
-x = np.linspace(-3, 3, 20)
-y = np.linspace(-3, 3, 20)
-F = lambda X, Y: dipole(X, Y, p)
-
-fig, ax, cbar = Quiver(x, y, F)
-plt.show()
-
-
-#%% Streamplot
-x = np.array([0, 1, 2, 3])
-y = np.array([0, 1, 2, 3])
-u = np.array(x)
-v = np.array(y)
-
-im = ax.streamplot(X, Y, Ex, Ey)
-plt.show()
+#%% 呪い
+if __name__ == '__main__':
+    main()
