@@ -1,7 +1,6 @@
 # %% Imports
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy import constants as C
 from typing import Callable, Optional, Tuple
 
 '''
@@ -15,31 +14,12 @@ minipy_formatter_path = r'C:\Users\Laevateinn\Documents\GitHub' \
                          r'\MiniPys\Formatter'
 
 
-# %% Fields
-def dipole(X: np.ndarray, Y: np.ndarray, p= (0, 1), normal: bool = True):
-    '''Returns an (optionally) unscaled dipole field.'''
-    A = 1 / (4 * np.pi * C.epsilon_0)
-    r_dot_p = p[0] * X + p[1] * Y
-    r = np.sqrt(X**2 + Y**2)
-    
-    Ex = A * (3 * r_dot_p * X) - p[0] / r**3
-    Ey = A * (3 * r_dot_p * Y) - p[1] / r**3
-    
-    if normal:
-        E = np.sqrt(Ex**2 + Ey**2)
-        Ex = Ex / E
-        Ey = Ey / E
-        
-    
-    return Ex, Ey, 1 / r
-
-
 #%% Quiver
 ndarray = np.ndarray
 F_type = Callable[[ndarray, ndarray], Tuple[ndarray, ndarray, ndarray]]
 return_type = Optional[Tuple[plt.figure, plt.axis, plt.axis]]
 def Quiver(x: ndarray, y: ndarray, F: F_type,
-           cmap : str = 'gist_earth') -> return_type:
+           cmap : str = 'plasma', fig=None, ax=None) -> return_type:
     '''
     Plots a normalized, colormapped quiver.
         
@@ -66,7 +46,8 @@ def Quiver(x: ndarray, y: ndarray, F: F_type,
     cbar_ax: plt.axis
         Colorbar axis.
     '''
-    fig, ax = plt.subplots(dpi=300)
+    if not fig:
+        fig, ax = plt.subplots(dpi=300)
     
     X, Y = np.meshgrid(x, y)
     U, V, S = F(X, Y)
@@ -82,23 +63,48 @@ def Quiver(x: ndarray, y: ndarray, F: F_type,
 def main():    
     # Dipole moment
     import sys
+    import os
+    from fields import dipole, constant_field, polarized_sphere
     sys.path.insert(0, minipy_formatter_path)
     import minipy_formatter as MF
     
     
     #CMU = r"C:\Users\Laevateinn\AppData\Local\Microsoft\Windows\Fonts"
     #CMU += "\cmunrm.ttf"
-    MF.Format(font_paths=[]).rcUpdate()
-    p = (-1, 5)
-    x = np.linspace(-3, 3, 20)
-    y = np.linspace(-3, 3, 20)
-    F = lambda X, Y: dipole(X, Y, p)
+    MF.Format(font_paths=[]).rcUpdate(font_size=12)
+    plt.style.use('dark_background')
+
+    fig, ax = plt.subplots(dpi=300)
+
+    # Field parameters
+    P = [-1, 1]
+    R = 1.5
+
+    # Plots
+    z = np.linspace(-R, R, 100)
+    x = np.linspace(-3, 3, 30)
+    y = np.linspace(-3, 3, 30)
+    F = lambda X, Y: polarized_sphere(X, Y, P=P, R=R)
+    upper_circle = np.sqrt(R**2 - z**2)
+
+    ax.plot(z, upper_circle, color='white')
+    ax.plot(z, -upper_circle, color='white')
     
-    fig, ax, cbar_ax = Quiver(x, y, F)
-    ax.set(title=f'Dipole field | $p = {p}$', xlabel='x', ylabel='y')
-    cbar_ax.set(ylabel='', yticks=[])
+    fig, ax, cbar_ax = Quiver(x, y, F, fig=fig, ax=ax)
+    title = f'Uniformly polarized sphere | $\\mathbf{{P}} = {P}$, $R = {R}$'
+    ax.set(title=title, xlabel='x', ylabel='y')
+    cbar_ax.set(ylabel='Field strength (E)')
     
-    plt.show()
+    plt.tight_layout()
+    figs_dir = './Figures/'
+    filename = 'Uniformly polarized sphere.png'
+    path = os.path.join(figs_dir, filename)
+    
+    overwrite = False
+    if os.path.isfile(path) and not overwrite:
+        raise FileExistsError(f"File {path} already exists!")
+    
+    plt.savefig(path)
 
 #%% 呪い
 if __name__ == '__main__':
